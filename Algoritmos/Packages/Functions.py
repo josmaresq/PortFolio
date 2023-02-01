@@ -7,22 +7,19 @@ Created on Mon Jan 30 17:07:28 2023
 
 import numpy as np
 import logging
-import tensorflow as tf
-import tensorflow.keras
 from tensorflow.keras import layers
 from tensorflow.keras import models
 
 
 def class_weights_lab(labels):
-	unique, counts = np.unique(labels, return_counts=True)
-	# elems = dict(zip(unique, counts))
-	i = np.argmax(counts)
-	c_weights = {}
-
-	for j in range(len(unique)):
-		c_weights[j] = counts[i]/counts[j]
-	print(c_weights)
-	return c_weights
+    unique,counts = np.unique(labels, return_counts=True)
+    i=np.argmax(counts)
+    c_weights = {}
+    
+    for j in range(len(unique)):
+        c_weights[j] = counts[i]/counts[j]
+    print(c_weights)
+    return(c_weights)
 
 # Incremento del dataset
 
@@ -43,9 +40,7 @@ def preprocess_train(image):
     return image
 
 def create_network(iteracion):
-    
-    logging.info('RED NUMERO ' + str(iteracion))
-    
+        
     CNN = models.Sequential()
     CNN.add(layers.Conv2D(16, 5, input_shape=(224, 224, 3), padding='same', activation='relu')) #Tener en cuenta tamaño de la imagen
     CNN.add(layers.BatchNormalization()) #Añadido

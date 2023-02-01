@@ -39,8 +39,8 @@ argv = sys.argv[1:]
 
 #parser parameters
 parser = argparse.ArgumentParser(description='Configurations to train models.')
-parser.add_argument('-d', '--OUTPUT_PATH', help='models output directory',type=str)
-parser.add_argument('-pd', '--PATCHES_DIRECTORY', help='patches directory',type=str)
+parser.add_argument('-d', '--OUTPUT_PATH', help='models output directory',type=str, default="C:\\Users\\EQUIPO\\Documents\\Adenocarcinoma\\Pruebas_Grid_Search")
+parser.add_argument('-pd', '--PATCHES_DIRECTORY', help='patches directory',type=str, default="C:\\Users\\EQUIPO\\Documents\\Adenocarcinoma\\PANDA\\patches_annotated")
 parser.add_argument('-n', '--N_EXP', help='number of experiment',type=int, default=22)
 parser.add_argument('-b', '--BATCH_SIZE', help='batch_size',type=int, default=64)
 parser.add_argument('-e', '--EPOCHS', help='number of epochs',type=int, default=50)
@@ -64,8 +64,8 @@ dirname = os.listdir(args.PATCHES_DIRECTORY)
 
 droplist = []
 
-PANDA_patches_dataframe_aux = pd.read_csv(args.PATCHES_DIRECTORY + "\\" + "PANDA_patches_strong_labels.csv", header = None)
-PANDA_patches_dataframe = pd.read_csv(args.PATCHES_DIRECTORY + "\\" + "PANDA_patches_strong_labels.csv", header = None)
+PANDA_patches_dataframe_aux = pd.read_csv(args.PATCHES_DIRECTORY + "\\" + "PANDA_patches_strong_labels_aux.csv", header = None)
+PANDA_patches_dataframe = pd.read_csv(args.PATCHES_DIRECTORY + "\\" + "PANDA_patches_strong_labels_aux.csv", header = None)
 
 for i in range(len(PANDA_patches_dataframe_aux)):
     if PANDA_patches_dataframe_aux[1][i] == 0: # Se guardan los índices de las anotaciones a 0
@@ -109,12 +109,13 @@ list_LR = [args.MAX_LR]
 n = args.MAX_LR
 
 while n > args.MIN_LR:
-    n = n**-1
+    n = n*0.1
     list_LR.append(n)
 
 for it in range(total_EXP):
     
     total_PATH = args.OUTPUT_PATH + '\\' + 'IT_' + str(it)
+    
     
     if not os.path.exists(total_PATH):
         os.mkdir(total_PATH)
@@ -123,19 +124,21 @@ for it in range(total_EXP):
 
     for lr in list_LR:
         
-        total_PATH = total_PATH + '\\' + 'LR_' + str(lr)
+        logging.info('RED NUMERO ' + str(it) + ' LR ' + str(lr))
+
+        final_PATH = total_PATH + '\\' + 'LR_' + str(lr)
         
-        if not os.path.exists(total_PATH):
-            os.mkdir(total_PATH)
+        if not os.path.exists(final_PATH):
+            os.mkdir(final_PATH)
         
         CNN = func.create_network(it)
     
         for l in CNN.layers:
             print(l.name, l.trainable)
     
-        checkpoint = ModelCheckpoint(total_PATH + '\\model-{epoch:03d}-{val_loss:03f}-{val_accuracy:03f}.h5', verbose=1, monitor='val_loss', save_best_only=True, mode='auto') #, mode='min'
+        checkpoint = ModelCheckpoint(final_PATH + '\\model-{epoch:03d}-{val_loss:03f}-{val_accuracy:03f}.h5', verbose=1, monitor='val_loss', save_best_only=True, mode='auto') #, mode='min'
         
-        es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=50)
+        es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=15)
         
         callbacks_list = [checkpoint, history, es] #, reduce_lr] #, es] #, reduce_lr]
     
@@ -163,3 +166,18 @@ for it in range(total_EXP):
     
         loss = history.history['loss']
         val_loss = history.history['val_loss']
+
+        for (root,dirs,files) in os.walk(final_PATH, topdown=True):
+            print('--------------------------------')
+        
+        for file in files:
+            if file[-3:] != '.h5':
+                files.remove(file)
+        
+        if len(files) != 0:
+            model = max(files)
+            for file in files:
+                if file != model:
+                    os.remove(root + '\\' + file)
+                    print(root + '\\' + file)
+        
