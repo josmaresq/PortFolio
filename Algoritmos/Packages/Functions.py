@@ -9,6 +9,16 @@ import numpy as np
 import logging
 from tensorflow.keras import layers
 from tensorflow.keras import models
+import os
+
+def create_dir(directory):
+	if not os.path.isdir(directory):
+		try:
+			os.mkdir(directory)
+		except OSError:
+			print ("Creation of the directory %s failed" % directory)
+		else:
+			print ("Successfully created the directory %s " % directory)
 
 
 def class_weights_lab(labels):
@@ -106,3 +116,68 @@ def create_network(iteracion):
     logging.info(' ')
     
     return CNN
+
+def plot_confusion_matrix(cm,
+                          target_names,
+                          dir_image,
+                          title='Predictions',
+                          cmap=None,
+                          normalize=True,
+                         metric = None,
+                         ):
+
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import itertools
+
+    fig = plt.gcf()
+    DPI = fig.get_dpi()
+    fig.set_size_inches(1800.0/float(DPI),1800.0/float(DPI))
+    
+    dpi = 600
+    fontsize = 30
+    
+    kappa = metric #0.6613
+
+    if cmap is None:
+        cmap = plt.get_cmap('Blues')
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    
+    
+        
+    plt.figure(figsize=(16, 12))
+    plt.imshow(cm, interpolation='nearest', cmap=cmap)
+    #plt.title(title, fontsize=25)
+    #plt.colorbar()
+    
+    cb = plt.colorbar()
+    for t in cb.ax.get_yticklabels():
+         t.set_fontsize(fontsize)
+    
+    if target_names is not None:
+        tick_marks = np.arange(len(target_names))
+        plt.xticks(tick_marks, target_names, rotation=45,fontsize=fontsize)
+        plt.yticks(tick_marks, target_names,fontsize=fontsize)
+
+    
+    thresh = cm.max() / 1.5 if normalize else cm.max() / 2
+    
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        if normalize:
+            plt.text(j, i, "{:0.3f}".format(cm[i, j]),
+                     horizontalalignment="center",
+                     color="white" if cm[i, j] > thresh else "black",fontsize=fontsize)
+        else:
+            plt.text(j, i, "{:,}".format(cm[i, j]),
+                     horizontalalignment="center",
+                     color="white" if cm[i, j] > thresh else "black",fontsize=fontsize)
+
+    plt.tight_layout()
+    plt.ylabel('Pathologist predictions',fontsize=fontsize)
+    plt.xlabel('Model predictions $\kappa$={:0.4f}'.format(kappa),fontsize=fontsize)
+    
+    plt.tight_layout()
+    plt.savefig(dir_image, format='svg',dpi=dpi)
+
+
